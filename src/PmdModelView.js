@@ -59,6 +59,7 @@ function PMDModelView(layer, pmd, pmdView) {
   this.posFromBone2 = [];
 
   this.dancing = false;
+  this.pausingFrame = undefined;
 
   this.physics = new Physics(this.pmd);
 };
@@ -140,6 +141,18 @@ PMDModelView.prototype.startDance = function() {
   this.physics.resetRigidBodies(this.motions);
 };
 
+PMDModelView.prototype.stopDance = function() {
+  this.dancing = false;
+  this.pausingFrame = undefined;
+};
+
+PMDModelView.prototype.pauseDance = function() {
+  if (this.pausingFrame == undefined) {
+    this.pausingFrame = this.frame;
+  } else {
+    this.pausingFrame = undefined;
+  }
+};
 
 PMDModelView.prototype._initArrays = function() {
   this._initVertices();

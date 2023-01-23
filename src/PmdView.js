@@ -19,6 +19,8 @@ function PMDView(layer) {
   this.frame = 0;
   this.dframe = 1;
 
+  this.pausingFrame = undefined;
+
   this.camera = {};
   this.camera.location = [0, 0, 0];
   this.camera.rotation = [0, 0, 0];
@@ -110,6 +112,7 @@ PMDView.prototype._STAGE_OFF = 0;
 PMDView.prototype._STAGE_1   = 1;
 PMDView.prototype._STAGE_2   = 2;
 PMDView.prototype._STAGE_3   = 3;
+PMDView.prototype._STAGE_4   = 4;
 
 PMDView.prototype._EFFECT_OFF         = 0x0;
 PMDView.prototype._EFFECT_BLUR        = 0x1;
@@ -158,6 +161,7 @@ PMDView._STAGE_OFF = PMDView.prototype._STAGE_OFF;
 PMDView._STAGE_1   = PMDView.prototype._STAGE_1;
 PMDView._STAGE_2   = PMDView.prototype._STAGE_2;
 PMDView._STAGE_3   = PMDView.prototype._STAGE_3;
+PMDView._STAGE_4   = PMDView.prototype._STAGE_4;
 
 PMDView._EFFECT_OFF         = PMDView.prototype._EFFECT_OFF;
 PMDView._EFFECT_BLUR        = PMDView.prototype._EFFECT_BLUR;
@@ -220,6 +224,28 @@ PMDView.prototype.startDance = function() {
   }
 };
 
+PMDView.prototype.stopDance = function() {
+  this.dancing = false;
+  this.pausingFrame = undefined;
+  for(var i = 0; i < this.modelViews.length; i++) {
+    this.modelViews[i].stopDance();
+  }
+};
+
+PMDView.prototype.pauseDance = function() {
+  if (this.pausingFrame == undefined) {
+    this.pausingFrame = this.frame;
+  } else {
+    this.pausingFrame = undefined;
+  }
+  for(var i = 0; i < this.modelViews.length; i++) {
+    this.modelViews[i].pauseDance();
+  }
+};
+
+PMDView.prototype.removeAllModels = function() {
+  this.modelViews.removeAll();
+}
 
 PMDView.prototype.setEye = function(eye) {
   for(var i = 0; i < this.eye.length; i++) {
@@ -429,6 +455,10 @@ PMDView.prototype._calculateDframe = function() {
     } else {
       this.dframe = 0;
     }
+  }
+  if (this.pausingFrame != undefined) {
+    this.frame = this.pausingFrame;
+    this.dframe = 0;
   }
   this.oldDate = newDate;
 };

@@ -516,6 +516,7 @@ Layer.prototype._initStageShaders = function() {
   this.stageShaders[0] = new SimpleStage(this);
   this.stageShaders[1] = new MeshedStage(this);
   this.stageShaders[2] = new TrialStage(this);
+  this.stageShaders[3] = new MeshedStage2(this);
 };
 
 
@@ -1179,6 +1180,42 @@ MeshedStage.prototype._FSHADER.src = '\
       gl_FragColor = vec4((vec3(1.0)+b)*visibility, alpha);\
     } else {\
       gl_FragColor = vec4((vec3(0.0)+b)*visibility, alpha);\
+    }\
+  }\
+';
+
+function MeshedStage2(layer) {
+  this.parent = StageShader;
+  this.parent.call(this, layer);
+};
+__inherit(MeshedStage2, StageShader);
+
+
+MeshedStage2.prototype._FSHADER = {};
+MeshedStage2.prototype._FSHADER.type = 'x-shader/x-fragment';
+MeshedStage2.prototype._FSHADER.src = '\
+  precision mediump float;\
+  varying vec3  vPosition;\
+  varying float vAlpha;\
+  uniform float uWidth;\
+\
+  const float tileSize = 20.0;\
+  const float pi = 3.1415926535;\
+\
+  vec2 getTile(vec2 pos) {\
+    return floor((pos + uWidth + (tileSize * 0.5)) / tileSize);\
+  }\
+\
+  void main() {\
+    float alpha = vAlpha;\
+    vec2 tile = getTile(vPosition.xz);\
+\
+    tile = vec2(mod(tile.x, 2.0), mod(tile.y, 2.0));\
+\
+    if(tile == vec2(0.0) || tile == vec2(1.0)) {\
+      gl_FragColor = vec4(1.0, 1.0, 1.0, alpha);\
+    } else {\
+      gl_FragColor = vec4(0.5, 0.5, 1.0, alpha);\
     }\
   }\
 ';

@@ -17,6 +17,7 @@
 <script type="text/javascript" src="src/PmdFileParser.js"></script>
 <script type="text/javascript" src="src/VmdFileParser.js"></script>
 <script type="text/javascript">
+  
 
 // configurations
 var __modelBaseURL = './model';
@@ -102,6 +103,26 @@ var __motions = [
    eye:  [0, 10, -22],
    music: {url: __musicBaseURL + '/wavefile_short.mp3',
            offset: 320},
+   selected: true},
+  {name: 'Schrodingeiger No Koneko',
+   url:  [__motionBaseURL + '/schrodingeiger_no_koneko.vmd'],
+   eye:  [0, 10, -22],
+   selected: true},
+  {name: 'Walking',
+   url:  [__motionBaseURL + '/moving_motion_walking.vmd'],
+   eye:  [0, 10, -22],
+   selected: true},
+  {name: 'Running',
+   url:  [__motionBaseURL + '/moving_motion_running.vmd'],
+   eye:  [0, 10, -22],
+   selected: true},
+  {name: 'Waiting',
+   url:  [__motionBaseURL + '/moving_motion_waiting.vmd'],
+   eye:  [0, 10, -22],
+   selected: true},
+  {name: 'Looking around',
+   url:  [__motionBaseURL + '/moving_motion_looking_around.vmd'],
+   eye:  [0, 10, -22],
    selected: true},
 /*
   {name: 'Koi Wa Kitto Kyujoushou',
@@ -208,6 +229,8 @@ var __stages = [
    selected: true},
   {name: 'Stage 3',
    value: PMDView._STAGE_3},
+  {name: 'Stage 4',
+   value: PMDView._STAGE_4},
 ];
 
 
@@ -361,6 +384,8 @@ var __putStatus = function(str) {
 var __initState = function() {
   __loadModelButton.disabled         = false;
   __loadMotionButton.disabled        = true;
+  __pauseMotionButton.disabled       = true;
+  __stopMotionButton.disabled        = true;
   __modelSelect.disabled             = false;
   __motionSelect.disabled            = false;
   __audioSelect.disabled             = false;
@@ -386,6 +411,8 @@ var __initState = function() {
 var __loadingFileState = function() {
   __loadModelButton.disabled         = true;
   __loadMotionButton.disabled        = true;
+  __pauseMotionButton.disabled       = true;
+  __stopMotionButton.disabled        = true;
   __modelSelect.disabled             = true;
   __motionSelect.disabled            = true;
   __audioSelect.disabled             = true;
@@ -409,8 +436,12 @@ var __pmdFileLoadedState = function() {
   // TODO: temporal
   if(__pmdView && __pmdView.getModelNum() >= 5-1) {
     __loadModelButton.disabled         = true;
+    __pauseMotionButton.disabled       = true;
+    __stopMotionButton.disabled        = true;
   } else {
     __loadModelButton.disabled         = false;
+    __pauseMotionButton.disabled       = false;
+    __stopMotionButton.disabled        = false;
   }
   __loadMotionButton.disabled        = false;
   __modelSelect.disabled             = false;
@@ -438,6 +469,8 @@ var __pmdFileLoadedState = function() {
 var __vmdFileLoadedState = function() {
   __loadModelButton.disabled         = true;
   __loadMotionButton.disabled        = true;
+  __pauseMotionButton.disabled       = false;
+  __stopMotionButton.disabled        = false;
   __modelSelect.disabled             = false;
   __motionSelect.disabled            = false;
   __audioSelect.disabled             = false;
@@ -465,6 +498,8 @@ var __vmdFileLoadedState = function() {
 var __danceReadyState = function() {
   __loadModelButton.disabled         = true;
   __loadMotionButton.disabled        = true;
+  __pauseMotionButton.disabled       = false;
+  __stopMotionButton.disabled        = false;
   __modelSelect.disabled             = false;
   __motionSelect.disabled            = false;
   __videoGenerationCheckbox.disabled = true;
@@ -548,6 +583,8 @@ var __init = function() {
   __loadModelButton = document.getElementById('loadModelButton');
   __loadMotionButton = document.getElementById('loadMotionButton');
   __modelSelect = document.getElementById('modelSelect');
+  __stopMotionButton = document.getElementById('stopMotionButton');
+  __pauseMotionButton = document.getElementById('pauseMotionButton');
   __motionSelect = document.getElementById('motionSelect');
   __audioSelect = document.getElementById('audioSelect');
   __videoGenerationCheckbox =
@@ -757,6 +794,35 @@ var __loadMotionButtonClicked = function() {
 
   __loadVMDFiles(motionURLs, 0, []);
 };
+
+var __pauseMotionButtonClicked = function() {
+  __pmdView.pauseDance();
+}
+
+var __stopMotionButtonClicked = function() {
+  __loadModelButton.disabled         = false;
+  __loadMotionButton.disabled        = false;
+  __pauseMotionButton.disabled       = false;
+  __stopMotionButton.disabled        = false;
+  __modelSelect.disabled             = false;
+  __motionSelect.disabled            = false;
+  __audioSelect.disabled             = false;
+  __videoGenerationCheckbox.disabled = false;
+  __physicsSelect.disabled           = false;
+  __ikSelect.disabled                = false;
+  __morphSelect.disabled             = false;
+  __stageSelect.disabled             = false;
+  __sphereMapSelect.disabled         = false;
+  __shadowMappingSelect.disabled     = false;
+  __runTypeSelect.disabled           = false;
+  __effectSelect.disabled            = false;
+  __edgeSelect.disabled              = false;
+  __skinningSelect.disabled          = false;
+  __lightingSelect.disabled          = false;
+  __lightColorRange.disabled         = false;
+
+  __pmdView.stopDance();
+}
 
 
 // TODO: load in parallel if file# become many.
@@ -1152,15 +1218,46 @@ var __mouseMoveHandler = function(e) {
   __previousMousePosition.y = e.clientY;
 };
 
+var moveCameraByXY = function(e, dx, dy) {
+  if(e.ctrlKey) {
+    dx *= 10;
+    dy *= 10;
+  }
+  if(e.shiftKey) {
+    __pmdView.moveCameraTranslation(dx, dy);
+  } else {
+    __pmdView.moveCameraQuaternionByXY(dx, dy);
+  }
+}
+
+var moveCameraByZ = function(e, dz) {
+  __pmdView.moveCameraForward(dz);
+}
+
+var resetCamera = function(e) {
+  __pmdView.resetCameraMove();
+};
+
+var exportImage = function(e) {
+  __canvas.toBlob(function(blob){
+    var anchor = document.getElementById("imageLink");
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = "image.jpg";
+    anchor.click();
+    URL.revokeObjectURL(anchor.href);
+  });
+}
+
 
 </script>
 </head>
 <body onload="__init()">
 
 <p>
-<a href="https://github.com/takahirox/mmd-viewer-js">source code</a>
-<a href="http://d.hatena.ne.jp/takahirox/20150407/1428386557/">demo video(blog)</a>
-Twitter: <a href="https://twitter.com/superhoge">@superhoge</a>
+<a href="https://github.com/k-hatano/mmd-viewer-js" target="_blank">source code</a>
+(Origin: <a href="https://github.com/takahirox/mmd-viewer-js" target="_blank">source code</a>
+<a href="http://d.hatena.ne.jp/takahirox/20150407/1428386557/" target="_blank">demo video(blog)</a>
+Twitter: <a href="https://twitter.com/superhoge" target="_blank">@superhoge</a>)
 </p>
 
 <p>
@@ -1174,7 +1271,13 @@ load model
 load motion
 </button>
 <select id="motionSelect" onchange="__motionSelectChanged()"></select>
-<select id="audioSelect" onchange="__audioSelectChanged()"></select><br />
+<select id="audioSelect" onchange="__audioSelectChanged()"></select>
+<button id="pauseMotionButton" onclick="__pauseMotionButtonClicked()">
+pause motion
+</button>
+<button id="stopMotionButton" onclick="__stopMotionButtonClicked()">
+stop motion
+</button><br />
 <input type="checkbox" id="videoGenerationCheckbox"
  onchange="__videoGenerationCheckboxChanged()" />
 generate a video
@@ -1210,6 +1313,16 @@ Light <!--Color-->Strength
 
 <canvas id="mainCanvas" width="640" height="480"></canvas><br />
 
+<br />
+<button onclick="moveCameraByXY(event, -0.01, 0)">◀</button>
+<button onclick="moveCameraByXY(event, 0, -0.01)">▲</button>
+<button onclick="moveCameraByXY(event, 0, 0.01)">▼</button>
+<button onclick="moveCameraByXY(event, 0.01, 0)">▶</button>
+<button onclick="moveCameraByZ(event, 1)">＋</button>
+<button onclick="moveCameraByZ(event, -1)">－</button>
+<button onclick="resetCamera(event)">Go Back to Origin</button>
+<!-- <button onclick="exportImage(event)">Export Image</button>
+<a href="#" id="imageLink">image link</a> -->
 <p>
 Thanks to
 </p>
